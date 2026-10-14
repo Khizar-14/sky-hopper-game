@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#b9efff">
+  <title>Sky Hopper</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: #b9efff;
+      color: #163550;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+      background:
+        radial-gradient(ellipse at 12% 16%, #fff9d8 0 7%, transparent 7.2%),
+        linear-gradient(155deg, #d5f7ff 0%, #a6e9fa 48%, #c6f2ff 100%);
+    }
+
+    .game-shell {
+      width: min(100%, 480px);
+      padding: 18px;
+      border: 3px solid #ffffff;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, .72);
+      box-shadow: 0 22px 55px rgba(36, 119, 153, .2), inset 0 0 0 1px #8bd6e8;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 1px 5px 13px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 14px;
+      background: #ffcf59;
+      font-size: 24px;
+      box-shadow: 0 4px 0 #e6a83f;
+    }
+
+    h1 {
+      margin: 0;
+      color: #174667;
+      font-size: clamp(20px, 5vw, 27px);
+      line-height: 1;
+      letter-spacing: -.7px;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: #54829a;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .4px;
+    }
+
+    .score-box {
+      min-width: 78px;
+      padding: 7px 12px 6px;
+      border: 2px solid #fff;
+      border-radius: 14px;
+      background: #e9fbff;
+      text-align: center;
+      box-shadow: 0 3px 0 #a4dce9;
+    }
+
+    .score-label {
+      display: block;
+      color: #6893a6;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+    }
+
+    #score {
+      display: block;
+      color: #174667;
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      border: 4px solid #fff;
+      border-radius: 23px;
+      background: #b9efff;
+      box-shadow: 0 5px 0 #8bcfdf, 0 10px 22px rgba(46, 134, 164, .12);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 400 / 700;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(32, 98, 127, .22);
+      backdrop-filter: blur(3px);
+      transition: opacity .2s ease;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .card {
+      width: min(100%, 290px);
+      padding: 25px 22px 22px;
+      border: 3px solid #fff;
+      border-radius: 25px;
+      background: #fffdf0;
+      text-align: center;
+      box-shadow: 0 9px 0 #dfd9bd, 0 18px 35px rgba(27, 76, 91, .18);
+      transform: rotate(-1deg);
+    }
+
+    .card-emoji {
+      margin-bottom: 7px;
+      font-size: 48px;
+      line-height: 1;
+    }
+
+    .card h2 {
+      margin: 0;
+      color: #174667;
+      font-size: 27px;
+    }
+
+    .card p {
+      margin: 9px 0 18px;
+      color: #668395;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px 18px;
+      border: 0;
+      border-radius: 15px;
+      background: #ffbd45;
+      color: #503515;
+      cursor: pointer;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 900;
+      box-shadow: 0 5px 0 #dc9231;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+    button:hover { transform: translateY(-2px); box-shadow: 0 7px 0 #dc9231; }
+    button:active { transform: translateY(3px); box-shadow: 0 2px 0 #dc9231; }
+    button:focus-visible { outline: 3px solid #357ca0; outline-offset: 4px; }
+
+    .instructions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      padding: 16px 3px 2px;
+      color: #4c7c91;
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .instructions span { white-space: nowrap; }
+
+    .credits {
+      margin: 7px 0 1px;
+      color: #5a8495;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .credits strong { color: #32677f; }
+
+    .key {
+      display: inline-grid;
+      min-width: 22px;
+      height: 22px;
+      place-items: center;
+      margin-right: 3px;
+      padding: 0 5px;
+      border: 1px solid #b8dce5;
+      border-radius: 6px;
+      background: #fff;
+      color: #32677f;
+      box-shadow: 0 2px 0 #b8dce5;
+      font-size: 11px;
+    }
+
+    @media (max-height: 850px) {
+      body { padding: 10px; }
+      .game-shell { width: min(100%, 420px, calc((100vh - 90px) * 400 / 700)); padding: 12px; }
+      .topbar { padding-bottom: 9px; }
+      .instructions { padding-top: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">☁️</div>
+        <div>
+          <h1>Sky Hopper</h1>
+          <p class="subtitle">A bouncy little sky adventure</p>
+        </div>
+      </div>
+      <div class="score-box" aria-live="polite">
+        <span class="score-label">HEIGHT</span>
+        <span id="score">0</span>
+      </div>
+    </header>
+    <section class="stage" aria-label="Sky Hopper game">
+      <canvas id="game" width="400" height="700" aria-label="Pip, an original blue cartoon cat, bouncing between clouds"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <div class="card-emoji" id="card-emoji" aria-hidden="true">🐱</div>
+          <h2 id="card-title">Ready to hop?</h2>
+          <p id="card-copy">Help Pip, the blue cloud cat, bounce as high as possible!</p>
+          <button id="play-button" type="button">Start hopping</button>
+        </div>
+      </div>
+    </section>
+    <footer class="instructions" aria-label="Game controls">
+      <span><b class="key">←</b><b class="key">→</b> Move</span>
+      <span><b class="key">A</b><b class="key">D</b> Move</span>
+      <span><b class="key">P</b> / <b class="key">Esc</b> Pause</span>
+      <span><b class="key">R</b> Restart</span>
+    </footer>
+    <p class="credits">Offline play · No ads · No personal data collected · Best score stays on this device<br>Developed by <strong>Khizar Hussain</strong></p>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d");
+      const scoreElement = document.querySelector("#score");
+      const overlay = document.querySelector("#overlay");
+      const titleElement = document.querySelector("#card-title");
+      const copyElement = document.querySelector("#card-copy");
+      const emojiElement = document.querySelector("#card-emoji");
+      const playButton = document.querySelector("#play-button");
+      const width = 400;
+      const height = 700;
+      const keys = new Set();
+      let platforms = [];
+      let player;
+      let cameraY = 0;
+      let score = 0;
+      let bestScore = Number(localStorage.getItem("skyHopperBest") || 0);
+      let state = "ready";
+      let lastTime = 0;
+      let pointerX = null;
+      let cloudDrift = 0;
+
+      const random = (min, max) => min + Math.random() * (max - min);
+
+      function makePlatform(x, y, type = "normal") {
+        return { x, y, width: type === "spring" ? 77 : 72, height: 15, type, phase: random(0, Math.PI * 2) };
+      }
+
+      function resetGame() {
+        cameraY = 0;
+        score = 0;
+        scoreElement.textContent = "0";
+        player = { x: 177, y: 556, width: 46, height: 54, vx: 0, vy: 0, tilt: 0 };
+        platforms = [
+          makePlatform(164, 610, "normal"),
+          makePlatform(45, 520, "normal"),
+          makePlatform(254, 430, "spring"),
+          makePlatform(105, 340, "normal"),
+          makePlatform(288, 250, "normal"),
+          makePlatform(168, 160, "spring"),
+          makePlatform(43, 70, "normal")
+        ];
+      }
+
+      function startGame() {
+        resetGame();
+        player.vy = -690;
+        state = "playing";
+        overlay.classList.add("hidden");
+        lastTime = performance.now();
+      }
+
+      function pauseGame() {
+        if (state !== "playing") return;
+        state = "paused";
+        emojiElement.textContent = "⏸️";
+        titleElement.textContent = "Taking a breather?";
+        copyElement.textContent = "Press P or Escape to keep hopping.";
+        playButton.textContent = "Resume";
+        overlay.classList.remove("hidden");
+      }
+
+      function resumeGame() {
+        if (state !== "paused") return;
+        state = "playing";
+        overlay.classList.add("hidden");
+        lastTime = performance.now();
+      }
+
+      function endGame() {
+        state = "over";
+        const isBest = score > bestScore;
+        if (isBest) {
+          bestScore = score;
+          localStorage.setItem("skyHopperBest", String(bestScore));
+        }
+        emojiElement.textContent = isBest && score > 0 ? "🏆" : "😺";
+        titleElement.textContent = isBest && score > 0 ? "New best!" : "Nice hopping!";
+        copyElement.textContent = `You reached ${score} m. Best height: ${bestScore} m.`;
+        playButton.textContent = "Hop again";
+        overlay.classList.remove("hidden");
+      }
+
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+      }
+
+      function drawCloud(x, y, size, alpha = 1) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * .62, size * .22, 0, 0, Math.PI * 2);
+        ctx.ellipse(x - size * .32, y - size * .10, size * .28, size * .23, 0, 0, Math.PI * 2);
+        ctx.ellipse(x, y - size * .22, size * .34, size * .33, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + size * .31, y - size * .08, size * .27, size * .21, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawBackground() {
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, "#83dcf4");
+        gradient.addColorStop(.62, "#b9efff");
+        gradient.addColorStop(1, "#e0f9ff");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.fillStyle = "rgba(255, 255, 255, .35)";
+        for (let i = 0; i < 15; i++) {
+          const x = (i * 97 + 24) % width;
+          const y = (i * 139 + cloudDrift * (i % 2 ? .24 : .12)) % height;
+          ctx.beginPath();
+          ctx.arc(x, y, i % 3 === 0 ? 2 : 1.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        drawCloud(66, 175 + Math.sin(cloudDrift * .012) * 9, 50, .55);
+        drawCloud(337, 337 + Math.sin(cloudDrift * .01 + 2) * 10, 63, .48);
+        drawCloud(110, 555 + Math.sin(cloudDrift * .009 + 1) * 8, 42, .38);
+      }
+
+      function drawPlatform(platform) {
+        const y = platform.y - cameraY;
+        const moving = platform.type === "moving";
+        const bob = moving ? Math.sin(cloudDrift * .003 + platform.phase) * 17 : 0;
+        const x = platform.x + bob;
+        ctx.save();
+        ctx.fillStyle = platform.type === "spring" ? "#edaa48" : "#70bd68";
+        roundRect(x, y, platform.width, platform.height, 8);
+        ctx.fill();
+        ctx.fillStyle = platform.type === "spring" ? "#ffe07a" : "#a8e67a";
+        roundRect(x, y - 5, platform.width, 11, 8);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.6)";
+        roundRect(x + 8, y - 3, platform.width * .3, 3, 2);
+        ctx.fill();
+        if (platform.type === "spring") {
+          ctx.strokeStyle = "#cf7d39";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(x + platform.width / 2 - 9, y - 8);
+          ctx.lineTo(x + platform.width / 2 - 5, y - 13);
+          ctx.lineTo(x + platform.width / 2, y - 8);
+          ctx.lineTo(x + platform.width / 2 + 5, y - 13);
+          ctx.lineTo(x + platform.width / 2 + 9, y - 8);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawCat() {
+        const screenY = player.y - cameraY;
+        const cx = player.x + player.width / 2;
+        const cy = screenY + player.height / 2;
+        const squash = player.vy > 100 ? 1.04 : 1;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(player.tilt);
+        ctx.scale(1 / squash, squash);
+
+        ctx.strokeStyle = "#155b91";
+        ctx.lineWidth = 7;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-17, 17);
+        ctx.quadraticCurveTo(-29, 27, -25, 14);
+        ctx.stroke();
+
+        ctx.fillStyle = "#278bc5";
+        ctx.beginPath();
+        ctx.ellipse(0, 8, 18, 22, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#3ca6dc";
+        ctx.beginPath();
+        ctx.moveTo(-17, -8); ctx.lineTo(-19, -28); ctx.lineTo(-3, -19);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(17, -8); ctx.lineTo(19, -28); ctx.lineTo(3, -19);
+        ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = "#ef9b9d";
+        ctx.beginPath();
+        ctx.moveTo(-15, -13); ctx.lineTo(-16, -23); ctx.lineTo(-8, -17);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(15, -13); ctx.lineTo(16, -23); ctx.lineTo(8, -17);
+        ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = "#278bc5";
+        ctx.beginPath();
+        ctx.moveTo(-7, -19); ctx.quadraticCurveTo(-4, -31, 1, -24);
+        ctx.quadraticCurveTo(7, -32, 8, -20); ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#fff2df";
+        ctx.beginPath();
+        ctx.ellipse(0, -4, 20, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.ellipse(-7, -8, 4.2, 5.4, -.08, 0, Math.PI * 2);
+        ctx.ellipse(7, -8, 4.2, 5.4, .08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#254f62";
+        ctx.beginPath();
+        ctx.ellipse(-6, -7, 2, 3.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(8, -7, 2, 3.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#155b91";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-11, -14); ctx.quadraticCurveTo(-7, -17, -3, -14);
+        ctx.moveTo(3, -14); ctx.quadraticCurveTo(7, -17, 11, -14);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ed8e92";
+        ctx.beginPath();
+        ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#8b5c61";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(0, 2); ctx.quadraticCurveTo(-1, 5, -5, 4);
+        ctx.moveTo(0, 2); ctx.quadraticCurveTo(1, 5, 5, 4);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(35,104,142,.78)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-10, 1); ctx.lineTo(-17, 0);
+        ctx.moveTo(-10, 4); ctx.lineTo(-17, 6);
+        ctx.moveTo(10, 1); ctx.lineTo(17, 0);
+        ctx.moveTo(10, 4); ctx.lineTo(17, 6);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffcf59";
+        ctx.beginPath();
+        ctx.moveTo(-12, 13); ctx.quadraticCurveTo(0, 18, 12, 13);
+        ctx.lineTo(8, 20); ctx.lineTo(0, 25); ctx.lineTo(-8, 20);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#fff1b2";
+        ctx.beginPath();
+        ctx.arc(0, 17, 1.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffcf59";
+        ctx.beginPath();
+        ctx.arc(0, -21, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#155b91";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(-9, 24); ctx.lineTo(-12, 28);
+        ctx.moveTo(9, 24); ctx.lineTo(12, 28);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function draw() {
+        drawBackground();
+        for (const platform of platforms) drawPlatform(platform);
+        if (player) drawCat();
+      }
+
+      function spawnPlatforms() {
+        let top = Math.min(...platforms.map(platform => platform.y));
+        while (top - cameraY > -120) {
+          top -= random(78, 105);
+          const type = Math.random() < .17 ? "spring" : Math.random() < .18 ? "moving" : "normal";
+          platforms.push(makePlatform(random(15, width - 92), top, type));
+        }
+        platforms = platforms.filter(platform => platform.y - cameraY < height + 60);
+      }
+
+      function update(dt) {
+        if (state !== "playing") return;
+        cloudDrift += dt * 1000;
+        const direction = (keys.has("ArrowRight") || keys.has("d") || keys.has("D") ? 1 : 0)
+          - (keys.has("ArrowLeft") || keys.has("a") || keys.has("A") ? 1 : 0);
+        const targetX = pointerX === null ? null : pointerX - player.width / 2;
+        if (targetX !== null) {
+          player.vx += (Math.max(-360, Math.min(360, (targetX - player.x) * 7)) - player.vx) * Math.min(1, dt * 9);
+        } else {
+          player.vx += (direction * 360 - player.vx) * Math.min(1, dt * 8);
+        }
+        const oldBottom = player.y + player.height;
+        player.x += player.vx * dt;
+        player.y += player.vy * dt;
+        player.vy += 1550 * dt;
+        player.tilt += ((player.vx / 360 * .22) - player.tilt) * Math.min(1, dt * 7);
+
+        if (player.x > width) player.x = -player.width;
+        if (player.x + player.width < 0) player.x = width;
+
+        if (player.vy > 0) {
+          for (const platform of platforms) {
+            const platformX = platform.x + (platform.type === "moving" ? Math.sin(cloudDrift * .003 + platform.phase) * 17 : 0);
+            const currentBottom = player.y + player.height;
+            if (oldBottom <= platform.y && currentBottom >= platform.y
+              && currentBottom <= platform.y + 20
+              && player.x + player.width - 7 > platformX
+              && player.x + 7 < platformX + platform.width) {
+              player.y = platform.y - player.height;
+              player.vy = platform.type === "spring" ? -920 : -690;
+              break;
+            }
+          }
+        }
+
+        if (player.y - cameraY < 265) cameraY = player.y - 265;
+        const reached = Math.max(0, Math.floor((556 - player.y) / 10));
+        if (reached > score) {
+          score = reached;
+          scoreElement.textContent = String(score);
+        }
+        spawnPlatforms();
+        if (player.y - cameraY > height + 80) endGame();
+      }
+
+      function frame(time) {
+        const dt = Math.min((time - (lastTime || time)) / 1000, .032);
+        lastTime = time;
+        if (state === "playing") update(dt);
+        else cloudDrift += dt * 1000;
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      function pointerPosition(event) {
+        const bounds = canvas.getBoundingClientRect();
+        pointerX = (event.clientX - bounds.left) * width / bounds.width;
+      }
+
+      canvas.addEventListener("pointerdown", event => {
+        canvas.setPointerCapture(event.pointerId);
+        pointerPosition(event);
+      });
+      canvas.addEventListener("pointermove", event => {
+        if (event.buttons || event.pointerType === "touch") pointerPosition(event);
+      });
+      canvas.addEventListener("pointerup", () => { pointerX = null; });
+      canvas.addEventListener("pointercancel", () => { pointerX = null; });
+      window.addEventListener("keydown", event => {
+        const key = event.key.toLowerCase();
+        if (["arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
+        if (event.repeat) return;
+        keys.add(event.key);
+        if (key === "r") {
+          startGame();
+        } else if (key === "p" || key === "escape") {
+          if (state === "playing") pauseGame();
+          else if (state === "paused") resumeGame();
+        } else if (key === " " || key === "enter") {
+          if (state === "ready" || state === "over") startGame();
+          else if (state === "playing") pauseGame();
+          else if (state === "paused") resumeGame();
+        }
+      });
+      window.addEventListener("keyup", event => keys.delete(event.key));
+      playButton.addEventListener("click", () => {
+        if (state === "paused") resumeGame();
+        else startGame();
+      });
+
+      resetGame();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>
